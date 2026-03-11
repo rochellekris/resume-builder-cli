@@ -1,10 +1,10 @@
-// Builds a .tex file from a Resume object.
-// Produces a standard LaTeX article document the user can compile with
-// pdflatex or paste into Overleaf. No LaTeX installation needed to generate.
+// Builds a .tex file from a Resume object and compiles it to PDF via pdflatex.
 
 import fs from "fs";
 import path from "path";
+import { spawnSync } from "child_process";
 import type { Resume } from "../types/resume.js";
+import { toTitleCase, capitalizeDate } from "../utils/formatters.js";
 
 // ── Escape special LaTeX characters ─────────────────────────────────────────
 function esc(text: string): string {
@@ -81,7 +81,7 @@ export function buildTex(resume: Resume, outputPath: string): void {
         for (const job of experience) {
             lines.push(
                 ``,
-                `\\textbf{${esc(job.title)}} \\hfill \\textit{${esc(job.startDate)} -- ${esc(job.endDate)}}\\\\`,
+                `\\textbf{${esc(toTitleCase(job.title))}} \\hfill \\textit{${esc(capitalizeDate(job.startDate))} -- ${esc(capitalizeDate(job.endDate))}}\\\\`,
                 `\\textit{${esc(job.company)}, ${esc(job.location)}}`,
                 `\\begin{itemize}`,
                 ...job.bullets.map((b) => `  \\item ${esc(b)}`),
@@ -98,13 +98,13 @@ export function buildTex(resume: Resume, outputPath: string): void {
             const gpaPart = edu.gpa ? ` \\textperiodcentered{} GPA: ${edu.gpa}/4.0` : "";
             lines.push(
                 ``,
-                `\\textbf{${esc(edu.degree)}} \\hfill ${esc(edu.graduationDate)}\\\\`,
+                `\\textbf{${esc(toTitleCase(edu.degree))}} \\hfill ${esc(capitalizeDate(edu.graduationDate))}\\\\`,
                 `\\textit{${esc(edu.school)}}${gpaPart}`
             );
             if (edu.coursework && edu.coursework.length > 0) {
                 lines.push(
                     `\\begin{itemize}`,
-                    `  \\item \\textbf{Relevant coursework:} ${edu.coursework.map(esc).join(", ")}`,
+                    `  \\item \\textbf{Relevant Coursework:} ${edu.coursework.map(esc).join(", ")}`,
                     `\\end{itemize}`
                 );
             }
@@ -116,7 +116,7 @@ export function buildTex(resume: Resume, outputPath: string): void {
     if (skills.length > 0) {
         lines.push(`\\section{Skills}`, `\\begin{itemize}`);
         for (const s of skills) {
-            lines.push(`  \\item \\textbf{${esc(s.category)}:} ${s.items.map(esc).join(", ")}`);
+            lines.push(`  \\item \\textbf{${esc(toTitleCase(s.category))}:} ${s.items.map(esc).join(", ")}`);
         }
         lines.push(`\\end{itemize}`, ``);
     }
@@ -127,7 +127,7 @@ export function buildTex(resume: Resume, outputPath: string): void {
         for (const proj of projects) {
             lines.push(
                 ``,
-                `\\textbf{${esc(proj.name)}} --- \\textit{${esc(proj.type)}}\\\\`,
+                `\\textbf{${esc(toTitleCase(proj.name))}} --- \\textit{${esc(proj.type)}}\\\\`,
                 esc(proj.description),
                 `\\begin{itemize}`,
                 ...proj.bullets.map((b) => `  \\item ${esc(b)}`),
@@ -151,4 +151,61 @@ export function buildTex(resume: Resume, outputPath: string): void {
     const dir = path.dirname(outputPath);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
     fs.writeFileSync(outputPath, lines.join("\n"), "utf8");
+
+    // ── Compile to PDF ────────────────────────────────────────────────────────
+    const pdflatex = resolvePdflatex();
+
+    if (!pdflatex) {
+        console.warn(`⚠️   pdflatex not found — skipping PDF compilation.`);
+        console.warn(`    Install a TeX distribution or set the PDFLATEX_PATH environment variable:`);
+        console.warn(`      macOS:   brew install --cask mactex-no-gui`);
+        console.warn(`      Windows: https://miktex.org/download`);
+        console.warn(`      Linux:   sudo apt install texlive-latex-base`);
+        return;
+    }
+
+    console.log(`\n🔧  Compiling PDF...`);
+    const result = spawnSync(pdflatex, ["-interaction=nonstopmode", outputPath], {
+        cwd: dir,
+        encoding: "utf8",
+    });
+
+    if (result.status === 0) {
+        const pdfPath = outputPath.replace(/\.tex$/, ".pdf");
+        console.log(`📄  PDF saved: ${pdfPath}`);
+    } else {
+        console.error(`❌  pdflatex failed (exit ${result.status})`);
+        console.error(result.stdout?.split("\n").filter((l) => l.startsWith("!")).join("\n"));
+    }
+}
+
+// ── Resolve pdflatex path ─────────────────────────────────────────────────────
+function resolvePdflatex(): string | null {
+    // 1. Explicit override always wins
+    if (process.env.PDFLATEX_PATH) return process.env.PDFLATEX_PATH;
+
+    // 2. Check if it's already on PATH (works after a fresh install on any OS)
+    const onPath = spawnSync("pdflatex", ["--version"], { encoding: "utf8" });
+    if (onPath.status === 0) return "pdflatex";
+
+    // 3. Fallback to known default install locations per platform
+    const candidates: string[] =
+        process.platform === "win32"
+            ? [
+                "C:\\Program Files\\MiKTeX\\miktex\\bin\\x64\\pdflatex.exe",
+                "C:\\Program Files (x86)\\MiKTeX\\miktex\\bin\\pdflatex.exe",
+            ]
+            : process.platform === "darwin"
+                ? [
+                    "/usr/local/texlive/2026/bin/universal-darwin/pdflatex",
+                    "/usr/local/texlive/2025/bin/universal-darwin/pdflatex",
+                    "/usr/local/texlive/2024/bin/universal-darwin/pdflatex",
+                    "/Library/TeX/texbin/pdflatex",
+                ]
+                : [
+                    "/usr/bin/pdflatex",
+                    "/usr/local/bin/pdflatex",
+                ];
+
+    return candidates.find((p) => fs.existsSync(p)) ?? null;
 }

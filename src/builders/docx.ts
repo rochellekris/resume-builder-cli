@@ -15,6 +15,7 @@ import {
 import fs from "fs";
 import path from "path";
 import type { Resume } from "../types/resume.js";
+import { toTitleCase, capitalizeDate } from "../utils/formatters.js";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -118,11 +119,11 @@ export async function buildDocx(resume: Resume, outputPath: string): Promise<voi
     if (experience.length > 0) {
         children.push(...sectionHeading("Experience"));
         for (const job of experience) {
-            const dateRange = `${job.startDate} – ${job.endDate}`;
+            const dateRange = `${capitalizeDate(job.startDate)} – ${capitalizeDate(job.endDate)}`;
             children.push(
                 new Paragraph({
                     spacing: { before: 80, after: 0 },
-                    children: [new TextRun({ text: job.title, bold: true, size: 22, font: "Calibri" })],
+                    children: [new TextRun({ text: toTitleCase(job.title), bold: true, size: 22, font: "Calibri" })],
                 }),
                 new Paragraph({
                     spacing: { before: 0, after: 50 },
@@ -145,13 +146,13 @@ export async function buildDocx(resume: Resume, outputPath: string): Promise<voi
     if (education.length > 0) {
         children.push(...sectionHeading("Education"));
         for (const edu of education) {
-            const meta = [edu.school, edu.graduationDate, edu.gpa ? `GPA: ${edu.gpa} / 4.0` : undefined]
+            const meta = [edu.school, capitalizeDate(edu.graduationDate), edu.gpa ? `GPA: ${edu.gpa} / 4.0` : undefined]
                 .filter(Boolean)
                 .join("  ·  ");
             children.push(
                 new Paragraph({
                     spacing: { before: 80, after: 0 },
-                    children: [new TextRun({ text: edu.degree, bold: true, size: 22, font: "Calibri" })],
+                    children: [new TextRun({ text: toTitleCase(edu.degree), bold: true, size: 22, font: "Calibri" })],
                 }),
                 new Paragraph({
                     spacing: { before: 0, after: 50 },
@@ -168,7 +169,7 @@ export async function buildDocx(resume: Resume, outputPath: string): Promise<voi
     if (skills.length > 0) {
         children.push(...sectionHeading("Skills"));
         for (const s of skills) {
-            children.push(bullet(s.items.join(", "), `${s.category}: `));
+            children.push(bullet(s.items.join(", "), `${toTitleCase(s.category)}: `));
         }
     }
 
@@ -180,7 +181,7 @@ export async function buildDocx(resume: Resume, outputPath: string): Promise<voi
                 new Paragraph({
                     spacing: { before: 80, after: 20 },
                     children: [
-                        new TextRun({ text: proj.name, bold: true, size: 22, font: "Calibri" }),
+                        new TextRun({ text: toTitleCase(proj.name), bold: true, size: 22, font: "Calibri" }),
                         new TextRun({ text: `  —  ${proj.type}`, italics: true, size: 21, color: "5A5A5A", font: "Calibri" }),
                     ],
                 }),

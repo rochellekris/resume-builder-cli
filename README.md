@@ -7,6 +7,11 @@ A CLI tool that walks you through building a resume and exports it as a `.docx` 
 ## Prerequisites
 
 - **Node.js 18+** — install via [nodejs.org](https://nodejs.org) or `brew install node`
+- **TeX distribution** (for PDF compilation) — install for your platform, then restart your terminal:
+  - **macOS:** `brew install --cask mactex-no-gui`
+  - **Windows:** [MiKTeX](https://miktex.org/download)
+  - **Linux:** `sudo apt install texlive-latex-base`
+  - Or set the `PDFLATEX_PATH` environment variable to your `pdflatex` executable if it's installed in a non-standard location
 
 ---
 
@@ -63,7 +68,7 @@ npm run generate-sample
 | Format | Description |
 |--------|-------------|
 | `.docx` | Microsoft Word — open in Word, Google Docs, or Pages |
-| `.tex` | LaTeX — compile with `pdflatex` or paste into [Overleaf](https://overleaf.com) |
+| `.tex` | LaTeX source + auto-compiled to `.pdf` via `pdflatex` (requires a TeX distribution) |
 
 ---
 

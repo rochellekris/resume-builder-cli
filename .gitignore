@@ -1,0 +1,33 @@
+# ── Dependencies ──────────────────────────────────────────────────────────
+node_modules/
+
+# ── Build output ──────────────────────────────────────────────────────────
+dist/
+
+# ── Python ────────────────────────────────────────────────────────────────
+.venv/
+__pycache__/
+*.py[cod]
+
+# ── Generated resumes (root-level output) ─────────────────────────────────
+# Keep sample/ files — exclude anything generated at the root
+*.docx
+*.pdf
+*.tex
+
+# LaTeX build artifacts
+*.aux
+*.log
+*.out
+*.toc
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+
+# ── Personal resume data ───────────────────────────────────────────────────
+resume.json
+
+# ── OS / editor ────────────────────────────────────────────────────────────
+.DS_Store
+*.swp
+*.swo

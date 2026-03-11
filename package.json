@@ -1,0 +1,41 @@
+{
+  "name": "resume-builder-cli",
+  "version": "1.0.0",
+  "description": "A CLI tool that walks you through building a resume",
+  "main": "dist/index.js",
+  "type": "module",
+  "bin": {
+    "resume": "dist/index.js",
+    "resume-mcp": "dist/mcp/server.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsc --watch",
+    "mcp": "node dist/mcp/server.js",
+    "generate-sample": "node dist/index.js generate json sample/jordan_hayes_resume.json"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rochellekris/resume-builder-cli.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/rochellekris/resume-builder-cli/issues"
+  },
+  "homepage": "https://github.com/rochellekris/resume-builder-cli#readme",
+  "devDependencies": {
+    "@types/node": "^25.4.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.27.1",
+    "commander": "^14.0.3",
+    "docx": "^9.6.1",
+    "inquirer": "^13.3.0",
+    "zod": "^4.3.6"
+  }
+}
